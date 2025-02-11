@@ -8,11 +8,18 @@ import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }), 
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     providePrimeNG({
       theme: {
-          preset: Aura
+          preset: Aura,
+          options: {
+            darkModeSelector: '.dark',
+            cssLayer: {
+              name: 'primeng',
+              order: 'tailwind, primeng'
+            }
+          }
       }
   })
   ]
