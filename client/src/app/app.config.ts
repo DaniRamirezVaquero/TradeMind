@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeng/themes/aura';
+import { MyPreset } from './mytheme';
 
 
 import { routes } from './app.routes';
@@ -12,9 +12,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     providePrimeNG({
       theme: {
-          preset: Aura,
+          preset: MyPreset,
           options: {
-            darkModeSelector: '.dark',
+            darkModeSelector: '.dark-mode',
             cssLayer: {
               name: 'primeng',
               order: 'tailwind, primeng'

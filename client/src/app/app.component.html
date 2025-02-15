@@ -1,1 +1,13 @@
-<app-chat></app-chat>
+
+<div id="app-container" class="grid grid-cols-8 grid-rows-10 gap-3 border border-amber-300 h-dvh">
+  <!-- Header -->
+  <app-header class="col-span-8 border-amber-300"></app-header>
+  <div class="col-span-2 row-span-9 row-start-2 border border-amber-300"></div>
+
+  <!-- Main content area -->
+  <main id="main-content" class="col-span-4 row-span-9 col-start-3 row-start-2 border border-amber-300 flex">
+    <app-chat class="w-full"></app-chat>
+  </main>
+
+  <div class="col-span-2 row-span-9 col-start-7 row-start-2 border border-amber-300"></div>
+</div>
