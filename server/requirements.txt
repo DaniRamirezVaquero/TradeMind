@@ -12,3 +12,5 @@ trustcall
 langgraph-cli
 python-dotenv
 colorama
+fastapi
+uvicorn

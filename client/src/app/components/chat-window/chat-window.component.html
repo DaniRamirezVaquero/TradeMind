@@ -1,5 +1,13 @@
-<div id="chat-window-container" class="flex flex-col gap-3 h-full w-full overflow-auto transition-width">
-
-
-
-</div>
+<p-scrollPanel #scrollPanel id="chat-window-container" [style]="{ width: '100%', height: '100%' }" styleClass="bg-surface-800/70 p-4 rounded-xl">
+  @for (msg of messages; track msg.id; let last = $last) {
+    @if (msg.type == 'AI') {
+      <div class="px-4 py-3 bg-primary-800/40 border-2 border-primary-800 rounded-[12px] w-fit max-w-[70%]" [class.mb-4]="!last">
+        <p class="text-sm text-surface-100">{{ msg.content }}</p>
+      </div>
+    } @else {
+      <div class="px-4 py-3 bg-surface-700/40 border-2 border-surface-700 rounded-[12px] w-fit max-w-[70%] ml-auto" [class.mb-4]="!last">
+        <p class="text-sm text-surface-100">{{ msg.content }}</p>
+      </div>
+    }
+  }
+</p-scrollPanel>

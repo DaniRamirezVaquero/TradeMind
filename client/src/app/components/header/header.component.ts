@@ -4,7 +4,7 @@ import { DarkModeToggleComponent } from '../dark-mode-toggle/dark-mode-toggle.co
 @Component({
   selector: 'app-header',
   imports: [
-    DarkModeToggleComponent
+    DarkModeToggleComponent,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'

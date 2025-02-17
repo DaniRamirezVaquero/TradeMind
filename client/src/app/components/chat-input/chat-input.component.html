@@ -1,3 +1,22 @@
-<div id="chat-input-container" class="flex">
-  <textarea pTextarea [autoResize]="true" name="humanInput" id="humanInput" class="min-h-[44px] max-h-52 w-full h-full flex-1 dark"></textarea>
+<div
+  id="chat-input-container"
+  class="flex gap-3 rounded-xl bg-surface-800/70 p-4"
+>
+  <textarea
+    pTextarea
+    [autoResize]="true"
+    name="humanInput"
+    id="humanInput"
+    fluid="true"
+    class="min-h-[44px] max-h-52 h-full flex-1"
+    [(ngModel)]="message"
+    (keydown)="onKeyDown($event)"
+  ></textarea>
+  <p-button
+    icon="pi pi-send"
+    rounded="true"
+    variant="text"
+    aria-label="Send"
+    [disabled]="!message"
+    (click)="sendMessage()"/>
 </div>

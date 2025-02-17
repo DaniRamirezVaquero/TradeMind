@@ -5,6 +5,10 @@ from typing_extensions import TypedDict
 from typing import Dict, Any, Optional
 from langgraph.prebuilt import tools_condition, ToolNode
 from langchain_core.tools import Tool
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Cargar variables de entorno desde .env
 
 # Defino mi modelo
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
