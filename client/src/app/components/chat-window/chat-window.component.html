@@ -1,5 +1,5 @@
 <p-scrollPanel #scrollPanel id="chat-window-container" [style]="{ width: '100%', height: '100%' }" styleClass="bg-surface-800/70 p-4 rounded-xl">
-  @for (msg of messages; track msg.id; let last = $last) {
+  @for (msg of messages; track $index; let last = $last) {
     @if (msg.type == 'AI') {
       <div class="px-4 py-3 bg-primary-800/40 border-2 border-primary-800 rounded-[12px] w-fit max-w-[70%]" [class.mb-4]="!last">
         <p class="text-sm text-surface-100">{{ msg.content }}</p>
@@ -9,5 +9,11 @@
         <p class="text-sm text-surface-100">{{ msg.content }}</p>
       </div>
     }
+  }
+  @if (isLoading) {
+    <div class="px-4 py-3 bg-primary-800/40 border-2 border-primary-800 rounded-[12px] w-fit max-w-[70%] mb-4 flex items-center gap-2">
+      <p-progressSpinner [style]="{width: '30px', height: '30px'}" strokeWidth="4" animationDuration="1s"/>
+      <p class="text-sm text-surface-100">El agente está pénsando...</p>
+    </div>
   }
 </p-scrollPanel>

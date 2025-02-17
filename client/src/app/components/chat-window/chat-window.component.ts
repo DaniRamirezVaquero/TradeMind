@@ -5,13 +5,15 @@ import { PanelModule } from 'primeng/panel';
 import { Message } from '../../interfaces/message';
 import { Subscription } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-chat-window',
   imports: [
     ScrollPanelModule,
     MessageModule,
-    PanelModule
+    PanelModule,
+    ProgressSpinnerModule
   ],
   templateUrl: './chat-window.component.html',
   styleUrl: './chat-window.component.css'
@@ -21,15 +23,23 @@ import { ChatService } from '../../services/chat.service';
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('scrollPanel') private scrollPanel!: ScrollPanel;
   messages: Message[] = [];
+  isLoading: boolean = false;
 
-  private subscription!: Subscription;
+  private subscriptions: Subscription[] = [];
 
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
-    this.subscription = this.chatService.messages$.subscribe(message => {
+    const messagesSubscription = this.chatService.messages$.subscribe(message => {
       this.messages.push(message);
     });
+
+    const loadingSubscription = this.chatService.loading$.subscribe(loading => {
+      this.isLoading = loading;
+      console.log('Loading:', loading);
+    });
+
+    this.subscriptions.push(messagesSubscription, loadingSubscription);
   }
 
   ngAfterViewChecked() {
@@ -48,6 +58,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 }
