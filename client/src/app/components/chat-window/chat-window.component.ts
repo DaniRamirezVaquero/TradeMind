@@ -6,6 +6,7 @@ import { Message } from '../../interfaces/message';
 import { Subscription } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MarkdownModule } from 'ngx-markdown';
 
 @Component({
   selector: 'app-chat-window',
@@ -13,7 +14,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     ScrollPanelModule,
     MessageModule,
     PanelModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    MarkdownModule
   ],
   templateUrl: './chat-window.component.html',
   styleUrl: './chat-window.component.css'

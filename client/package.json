@@ -20,6 +20,8 @@
     "@angular/router": "^19.1.0",
     "@primeng/themes": "^19.0.6",
     "@tailwindcss/postcss": "^4.0.6",
+    "marked": "^15.0.7",
+    "ngx-markdown": "^19.1.0",
     "postcss": "^8.5.2",
     "primeicons": "^7.0.0",
     "primeng": "^19.0.6",
