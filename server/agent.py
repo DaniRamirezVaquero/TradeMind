@@ -8,6 +8,7 @@ from langchain_core.tools import Tool
 from dotenv import load_dotenv
 import os
 import uuid
+import json
 
 load_dotenv()  # Cargar variables de entorno desde .env
 
@@ -55,6 +56,13 @@ def detect_storage(message: str) -> Dict[str, Any]:
         HumanMessage(content=message)
     ]
     response = llm.invoke(messages)
+    storage_info = extract_info_from_response(response.content)
+    
+    # Validar la capacidad de almacenamiento
+    valid_storage_options = {"32GB" ,"64GB", "128GB", "256GB", "512GB", "1TB"}
+    if storage_info.get("storage") not in valid_storage_options:
+        return {"result": "{}"}  # Devolver un JSON vacío si la capacidad no es válida
+    
     return {"result": response.content}
 
 def detect_network(message: str) -> Dict[str, Any]:
@@ -83,7 +91,6 @@ def extract_info_from_response(response: str) -> Dict[str, Any]:
         Dictionary with extracted information
     """
     try:
-        import json
         return json.loads(response)
     except:
         return {}
@@ -207,7 +214,6 @@ def coordinator(state: MessagesState):
                     except Exception as e:
                         print(f"Error processing tool result: {e}")
 
-            
             # Actualizar device_info una sola vez con todos los resultados
             if results:
                 print(f"Resultados de la herramienta: {results}")
