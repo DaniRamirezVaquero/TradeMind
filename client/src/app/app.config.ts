@@ -2,6 +2,7 @@ import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 import { MyPreset } from './mytheme';
+import { CLIPBOARD_OPTIONS, ClipboardButtonComponent, provideMarkdown } from 'ngx-markdown';
 
 
 import { routes } from './app.routes';
@@ -14,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(),
+    provideMarkdown(),
     providePrimeNG({
       theme: {
           preset: MyPreset,

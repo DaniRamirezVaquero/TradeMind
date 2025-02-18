@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { ChatService } from '../../services/chat.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MarkdownModule } from 'ngx-markdown';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-chat-window',
@@ -15,16 +16,20 @@ import { MarkdownModule } from 'ngx-markdown';
     MessageModule,
     PanelModule,
     ProgressSpinnerModule,
-    MarkdownModule
+    MarkdownModule,
+    ButtonModule
   ],
   templateUrl: './chat-window.component.html',
   styleUrl: './chat-window.component.css'
 })
 
-
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('scrollPanel') private scrollPanel!: ScrollPanel;
-  messages: Message[] = [];
+  messages: Message[] = [{
+    id: "0",
+    type: 'AI',
+    content: 'Hola! Soy TradeMind, tu agente especializado en reventa de smartphones, en que te puedo ayudar?'
+  }];
   isLoading: boolean = false;
 
   private subscriptions: Subscription[] = [];
@@ -33,12 +38,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
 
   ngOnInit() {
     const messagesSubscription = this.chatService.messages$.subscribe(message => {
-      this.messages.push(message);
+      if (message.content !== '') {
+        this.messages.push(message);
+      }
     });
 
     const loadingSubscription = this.chatService.loading$.subscribe(loading => {
       this.isLoading = loading;
-      console.log('Loading:', loading);
     });
 
     this.subscriptions.push(messagesSubscription, loadingSubscription);
@@ -57,6 +63,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
         behavior: 'smooth'
       });
     }
+  }
+
+  onCopyToClipboard() {
+    console.log('Copied to clipboard!');
   }
 
   ngOnDestroy() {
