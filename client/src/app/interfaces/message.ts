@@ -6,7 +6,7 @@ export interface FunctionCall {
 export interface Message {
   content: string;
   type: 'AI' | 'Human' | 'tool_result';
-  id: string;
+  id?: string;
   additional_kwargs?: {
     function_call?: FunctionCall;
   };

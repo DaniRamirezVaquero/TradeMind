@@ -31,6 +31,9 @@ def predict_price(
     sale_date: Union[str, date] = date.today()
 ) -> float:
     """Predicts the selling price of a device based on its characteristics."""
+    
+    print(f"Predicting price for {brand} {model} ({storage}, 5G: {has_5g}, grade: {grade})") 
+    
     # Convertir fechas
     release_date = parse_date(release_date)
     sale_date = parse_date(sale_date)

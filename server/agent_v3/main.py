@@ -28,22 +28,67 @@ class AgentState(TypedDict):
 
 def build_system_prompt(messages: Sequence[BaseMessage], state: Dict) -> SystemMessage:
     """Build system prompt based on conversation stage."""
-    return SystemMessage(content=SYSTEM_PROMPT.format(
-        conversation_state="Processing your request..."
-    ))
+    # Detectar la etapa actual basándonos en el último mensaje
+    current_stage = "info_gathering"  # default
+    
+    # Buscar palabras clave en los últimos mensajes para determinar la etapa
+    last_messages = messages[-3:] if len(messages) > 3 else messages
+    for msg in reversed(last_messages):
+        if isinstance(msg, BaseMessage):
+            content = msg.content.lower()
+            if "lanzamiento" in content or "fecha" in content:
+                current_stage = "grade_assessment"
+                break
+            elif any(word in content for word in ["5g", "almacenamiento", "modelo"]):
+                current_stage = "info_gathering"
+            elif any(word in content for word in ["estado", "condición", "pantalla"]):
+                current_stage = "grade_assessment"
+                break
+
+    # Construir el prompt base
+    base_prompt = SYSTEM_PROMPT.format(conversation_state="Current stage: " + current_stage)
+    
+    # Añadir el GRADING_PROMPT si estamos en la fase de evaluación
+    if current_stage == "grade_assessment":
+        return SystemMessage(content=base_prompt + "\n\n" + GRADING_PROMPT)
+    
+    return SystemMessage(content=base_prompt)
+
+def can_predict_price(messages: Sequence[BaseMessage]) -> bool:
+    """Verifica si tenemos toda la información necesaria para predecir el precio."""
+    required_info = {
+        "brand": False,
+        "model": False,
+        "storage": False,
+        "has_5g": False,
+        "release_date": False,
+        "grade": False
+    }
+    
+    # Buscar en los últimos mensajes por la información necesaria
+    for msg in messages:
+        content = msg.content.lower()
+        if "grade" in content and any(grade in content for grade in ["b", "c", "d", "e"]):
+            required_info["grade"] = True
+        if "fecha de lanzamiento" in content and "/" in content:
+            required_info["release_date"] = True
+        # ... más validaciones según sea necesario
+    
+    return all(required_info.values())
 
 def assistant(state: MessagesState) -> MessagesState:
     """Main assistant node that handles the conversation flow."""
-    # Get messages from state
     messages = state["messages"]
     
-    # Build prompt
-    system_msg = build_system_prompt(messages)
+    # Build prompt with stage awareness
+    system_msg = build_system_prompt(messages, state)
     
     # Process with LLM and tools
-    response = llm_with_tools.invoke([system_msg] + messages)
+    if can_predict_price(messages):
+        response = llm_with_tools.invoke([system_msg] + messages)
+    else:
+        response = llm.invoke([system_msg] + messages)
     
-    # Return updated state
     return {"messages": messages + [response]}
 
 # Build graph

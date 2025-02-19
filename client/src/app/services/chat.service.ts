@@ -28,18 +28,25 @@ export class ChatService {
       );
       this.sessionId = response.sessionId;
       localStorage.setItem('chatSessionId', this.sessionId);
+
+      // Retornar los mensajes iniciales
       return response.messages;
     } else {
       // Cargar mensajes existentes
       const response = await firstValueFrom(
         this.http.get<{messages: Message[]}>(`${this.apiUrl}/messages/${this.sessionId}`)
       );
+
+      // Retornar los mensajes existentes
       return response.messages;
     }
   }
 
   sendMessage(message: Message) {
+    // Emitir el mensaje del usuario inmediatamente
     this.messageSubject.next(message);
+
+    // Indicar que estamos cargando
     this.loadingSubject.next(true);
 
     const payload = {
@@ -51,12 +58,14 @@ export class ChatService {
     this.http.post<{messages: Message[], sessionId: string}>(`${this.apiUrl}/chat`, payload)
       .subscribe({
         next: (response) => {
-          // Guardar el sessionId de la respuesta
           this.sessionId = response.sessionId;
           localStorage.setItem('chatSessionId', this.sessionId);
 
+          // Emitir solo la respuesta del AI
           response.messages.forEach(msg => {
-            this.messageSubject.next(msg);
+            if (msg.type === 'AI') {
+              this.messageSubject.next(msg);
+            }
           });
           this.loadingSubject.next(false);
         },

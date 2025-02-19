@@ -34,16 +34,37 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
   constructor(private chatService: ChatService) {}
 
   async ngOnInit() {
-    // Inicializar la sesión y cargar mensajes existentes
-    const initialMessages = await this.chatService.initializeSession();
-    this.messages = initialMessages || [];
-    this.shouldScroll = true;
+    // Establecer loading mientras inicializamos
+    this.isLoading = true;
 
+    try {
+      // Inicializar la sesión
+      const initialMessages = await this.chatService.initializeSession();
+
+      // Añadir los mensajes iniciales directamente al array
+      if (initialMessages && initialMessages.length > 0) {
+        this.messages = initialMessages;
+        this.shouldScroll = true;
+      }
+    } catch (error) {
+      console.error('Error initializing chat:', error);
+    } finally {
+      this.isLoading = false;
+    }
+
+    // Suscribirse a nuevos mensajes
     const messagesSubscription = this.chatService.messages$.subscribe(message => {
       if (message.content !== '') {
-        this.messages.push(message);
-        // Activar el scroll cuando se añade un nuevo mensaje
-        this.shouldScroll = true;
+        // Verificar si el mensaje ya existe para evitar duplicados
+        const messageExists = this.messages.some(
+          m => m.content === message.content && m.type === message.type
+        );
+
+        if (!messageExists) {
+          this.messages.push(message);
+          // Activar el scroll cuando se añade un nuevo mensaje
+          this.shouldScroll = true;
+        }
       }
     });
 
