@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
-from agent import react_graph, get_or_create_session, DeviceInfo
 from langchain.schema import HumanMessage, AIMessage
+
+from agent.agent import react_graph
+from agent.session_manager import get_or_create_session
+from agent.session_store import sessions
 
 app = FastAPI()
 
@@ -31,6 +34,7 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
+    
     # Obtener o crear sesión
     session_id, session_state = get_or_create_session(request.sessionId)
     
@@ -40,12 +44,16 @@ async def chat_endpoint(request: ChatRequest):
     # Invocar el agente con el estado de la sesión
     result = react_graph.invoke(session_state)
     
-    # Convertir los mensajes a formato API
+    # Guardar el nuevo estado en la sesión
+    sessions[session_id] = result
+    
+    # Convertir el último mensaje a formato API
     response_messages = []
-    for msg in result["messages"]:
-        if isinstance(msg, AIMessage):
+    if result["messages"]:
+        last_message = result["messages"][-1]
+        if isinstance(last_message, AIMessage):
             response_messages.append(Message(
-                content=msg.content,
+                content=last_message.content,
                 type="AI",
             ))
     

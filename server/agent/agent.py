@@ -6,119 +6,21 @@ from typing import Dict, Any, Optional, List
 from langgraph.prebuilt import tools_condition, ToolNode
 from langchain_core.tools import Tool
 from dotenv import load_dotenv
-import os
-import uuid
-import json
 
-load_dotenv()  # Cargar variables de entorno desde .env
+from .tools import detect_brand_model, detect_storage, detect_network
+from .utils import update_device_info, format_pending_info, extract_info_from_response
+from .models import DeviceInfo
+from .session_store import sessions 
+
+load_dotenv()
 
 # Defino mi modelo
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
-
-class DeviceInfo(TypedDict):
-    brand: str
-    model: str
-    storage: Optional[str]
-    network: Optional[str]
 
 class MessagesState(TypedDict):
     messages: List[BaseMessage]
     device_info: DeviceInfo
 
-def detect_brand_model(message: str) -> Dict[str, Any]:
-    """Detect device brand and model from text."""
-    messages = [
-        SystemMessage(content="""Analiza el mensaje y extrae marca y modelo del dispositivo.
-        Marcas comunes: Apple(iPhone), Samsung, Xiaomi, Huawei, Sony, Google, OnePlus.
-        Solo responde con un JSON válido. Ejemplo:
-        {"brand": "Samsung", "model": "S25"} o {} si no hay información clara.
-        No incluyas texto adicional, solo el JSON."""),
-        HumanMessage(content=message)
-    ]
-    response = llm.invoke(messages)
-    return {"result": response.content}
-
-def detect_storage(message: str) -> Dict[str, Any]:
-    """Detect device storage capacity.
-    
-    Parameters:
-        message: Input message containing storage information
-    Returns:
-        Dictionary with storage information
-    """
-    messages = [
-        SystemMessage(content="""Analiza el mensaje y extrae la capacidad de almacenamiento.
-        Formato común: 64GB, 128GB, 256GB, 512GB, 1TB
-        Responde solo con JSON válido.
-        Ejemplo:
-        {"storage": "128GB"} o {} si no hay información clara.
-        No incluyas texto adicional, solo el JSON."""),
-        HumanMessage(content=message)
-    ]
-    response = llm.invoke(messages)
-    storage_info = extract_info_from_response(response.content)
-    
-    # Validar la capacidad de almacenamiento
-    valid_storage_options = {"32GB" ,"64GB", "128GB", "256GB", "512GB", "1TB"}
-    if storage_info.get("storage") not in valid_storage_options:
-        return {"result": "{}"}  # Devolver un JSON vacío si la capacidad no es válida
-    
-    return {"result": response.content}
-
-def detect_network(message: str) -> Dict[str, Any]:
-    """Detect if device supports 5G.
-    
-    Parameters:
-        message: Input message containing network information
-    Returns:
-        Dictionary with network support information
-    """
-    messages = [
-        SystemMessage(content="""Analiza si el dispositivo es compatible con 5G.
-        Responde solo con JSON: {"network": "5G"} o {"network": "4G"}o {} si no hay información clara.
-        No incluyas texto adicional, solo el JSON."""),
-        HumanMessage(content=message)
-    ]
-    response = llm.invoke(messages)
-    return {"result": response.content}
-
-def extract_info_from_response(response: str) -> Dict[str, Any]:
-    """Extract information from JSON response string.
-    
-    Parameters:
-        response: JSON string from tool response
-    Returns:
-        Dictionary with extracted information
-    """
-    try:
-        return json.loads(response)
-    except:
-        return {}
-
-def update_device_info(current_info: DeviceInfo, new_info: Dict[str, Any]) -> DeviceInfo:
-    """Update device information with new data.
-    
-    Parameters:
-        current_info: Current device information
-        new_info: New information to add
-    Returns:
-        Updated device information
-    """
-    # Crear una copia del estado actual
-    updated_info = dict(current_info)
-    
-    # Solo actualizar los campos que vienen con nueva información
-    for key in ['brand', 'model', 'storage', 'network']:
-        if key in new_info and new_info[key]:
-            updated_info[key] = new_info[key]
-    
-    print(f"Estado anterior: {current_info}")
-    print(f"Nueva información: {new_info}")
-    print(f"Estado actualizado: {updated_info}")
-    
-    return DeviceInfo(**updated_info)
-
-# Modificar la definición de las herramientas
 tools = [
     Tool(
         name="detect_brand_model",
@@ -137,26 +39,6 @@ tools = [
     )
 ]
 
-def format_pending_info(device_info: DeviceInfo) -> str:
-    """Format pending device information as a Markdown list.
-    
-    Parameters:
-        device_info: Current device information
-    Returns:
-        Markdown formatted string with pending information
-    """
-    pending = []
-    if not device_info.get('brand') or not device_info.get('model'):
-        pending.append("- Marca y modelo del dispositivo")
-    if not device_info.get('storage'):
-        pending.append("- Capacidad de almacenamiento")
-    if not device_info.get('network'):
-        pending.append("- Compatibilidad con 5G")
-    
-    if pending:
-        return "Necesito la siguiente información:\n" + "\n".join(pending)
-    return ""
-
 sys_msg = SystemMessage(content="""Eres un asistente de venta de dispositivos móviles. Tu objetivo es ayudar al usuario a vender su dispositivo.
 
 Para ello, necesitas recopilar la siguiente información:
@@ -168,20 +50,6 @@ Si falta información, pregunta por ella de manera educada usando el formato de 
 Si el usuario proporciona nueva información, actualiza los datos y solicita la información restante.
 Cuando tengas toda la información, resume los detalles del dispositivo.""")
 
-# Almacén de sesiones
-sessions: Dict[str, MessagesState] = {}
-
-def get_or_create_session(session_id: str = None) -> tuple[str, MessagesState]:
-    """Get existing session or create new one."""
-    if session_id and session_id in sessions:
-        return session_id, sessions[session_id]
-    
-    new_session_id = session_id or str(uuid.uuid4())
-    sessions[new_session_id] = {
-        "messages": [],
-        "device_info": DeviceInfo(brand="", model="", storage="", network="")
-    }
-    return new_session_id, sessions[new_session_id]
 
 def coordinator(state: MessagesState):
     # Obtener el ID de la sesión actual
