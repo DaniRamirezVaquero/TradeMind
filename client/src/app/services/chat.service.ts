@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Message } from '../interfaces/message';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
@@ -16,7 +16,27 @@ export class ChatService {
 
   private apiUrl = 'http://localhost:8000';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.sessionId = localStorage.getItem('chatSessionId');
+  }
+
+  async initializeSession(): Promise<Message[]> {
+    if (!this.sessionId) {
+      // Crear nueva sesión
+      const response = await firstValueFrom(
+        this.http.post<{messages: Message[], sessionId: string}>(`${this.apiUrl}/init-session`, {})
+      );
+      this.sessionId = response.sessionId;
+      localStorage.setItem('chatSessionId', this.sessionId);
+      return response.messages;
+    } else {
+      // Cargar mensajes existentes
+      const response = await firstValueFrom(
+        this.http.get<{messages: Message[]}>(`${this.apiUrl}/messages/${this.sessionId}`)
+      );
+      return response.messages;
+    }
+  }
 
   sendMessage(message: Message) {
     this.messageSubject.next(message);
@@ -33,6 +53,7 @@ export class ChatService {
         next: (response) => {
           // Guardar el sessionId de la respuesta
           this.sessionId = response.sessionId;
+          localStorage.setItem('chatSessionId', this.sessionId);
 
           response.messages.forEach(msg => {
             this.messageSubject.next(msg);

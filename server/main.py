@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -56,6 +56,47 @@ async def chat_endpoint(request: ChatRequest):
                 content=last_message.content,
                 type="AI",
             ))
+    
+    return ChatResponse(
+        messages=response_messages,
+        sessionId=session_id
+    )
+
+@app.post("/init-session", response_model=ChatResponse)
+async def init_session():
+    # Crear nueva sesión
+    session_id, session_state = get_or_create_session()
+    
+    # Convertir mensajes a formato API
+    response_messages = []
+    for msg in session_state["messages"]:
+        if isinstance(msg, AIMessage):
+            response_messages.append(Message(
+                content=msg.content,
+                type="AI",
+            ))
+    
+    return ChatResponse(
+        messages=response_messages,
+        sessionId=session_id
+    )
+
+@app.get("/messages/{session_id}", response_model=ChatResponse)
+async def get_messages(session_id: str):
+    # Obtener sesión existente
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    session_state = sessions[session_id]
+    
+    # Convertir mensajes a formato API
+    response_messages = []
+    for msg in session_state["messages"]:
+        msg_type = "AI" if isinstance(msg, AIMessage) else "Human"
+        response_messages.append(Message(
+            content=msg.content,
+            type=msg_type,
+        ))
     
     return ChatResponse(
         messages=response_messages,

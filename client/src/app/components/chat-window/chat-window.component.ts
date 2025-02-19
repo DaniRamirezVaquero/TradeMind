@@ -25,43 +25,59 @@ import { ButtonModule } from 'primeng/button';
 
 export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('scrollPanel') private scrollPanel!: ScrollPanel;
-  messages: Message[] = [{
-    id: "0",
-    type: 'AI',
-    content: 'Hola! Soy TradeMind, tu agente especializado en reventa de smartphones, en que te puedo ayudar?'
-  }];
+  messages: Message[] = [];
   isLoading: boolean = false;
+  private shouldScroll: boolean = true;
 
   private subscriptions: Subscription[] = [];
 
   constructor(private chatService: ChatService) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Inicializar la sesión y cargar mensajes existentes
+    const initialMessages = await this.chatService.initializeSession();
+    this.messages = initialMessages || [];
+    this.shouldScroll = true;
+
     const messagesSubscription = this.chatService.messages$.subscribe(message => {
       if (message.content !== '') {
         this.messages.push(message);
+        // Activar el scroll cuando se añade un nuevo mensaje
+        this.shouldScroll = true;
       }
     });
 
     const loadingSubscription = this.chatService.loading$.subscribe(loading => {
       this.isLoading = loading;
+      // Si se completa la carga, activar el scroll
+      if (!loading) {
+        this.shouldScroll = true;
+      }
     });
 
     this.subscriptions.push(messagesSubscription, loadingSubscription);
   }
 
   ngAfterViewChecked() {
-    this.scrollToBottom();
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
   }
 
   private scrollToBottom() {
     if (this.scrollPanel && this.scrollPanel.contentViewChild) {
+      // Asegurarse de que el panel esté actualizado
       this.scrollPanel.refresh();
-      const element = this.scrollPanel.contentViewChild.nativeElement;
-      element.scrollTo({
-        top: element.scrollHeight,
-        behavior: 'smooth'
-      });
+
+      // Usar setTimeout para asegurar que el scroll se ejecute después de que el DOM se actualice
+      setTimeout(() => {
+        const element = this.scrollPanel?.contentViewChild?.nativeElement;
+        element.scrollTo({
+          top: element.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 0);
     }
   }
 
