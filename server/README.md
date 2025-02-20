@@ -30,7 +30,7 @@ El backend de TradeMind está construido utilizando FastAPI. Proporciona un endp
 
 4. Ejecuta el servidor:
     ```bash
-    uvicorn main:app --reload
+    uvicorn main:app --reload --port 8000
     ```
 
 5. Accede a la documentación interactiva de la API:
