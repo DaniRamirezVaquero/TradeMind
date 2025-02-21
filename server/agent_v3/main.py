@@ -72,7 +72,16 @@ def can_predict_price(messages: Sequence[BaseMessage]) -> bool:
             required_info["grade"] = True
         if "fecha de lanzamiento" in content and "/" in content:
             required_info["release_date"] = True
-        # ... más validaciones según sea necesario
+        if "5g" in content:
+            required_info["has_5g"] = True
+        if "almacenamiento" in content:
+            required_info["storage"] = True
+        if "modelo" in content:
+            required_info["model"] = True
+        if "marca" in content:
+            required_info["brand"] = True
+            
+    print("Required info:", required_info)  
     
     return all(required_info.values())
 
@@ -85,8 +94,10 @@ def assistant(state: MessagesState) -> MessagesState:
     
     # Process with LLM and tools
     if can_predict_price(messages):
+        print("Predicting price")
         response = llm_with_tools.invoke([system_msg] + messages)
     else:
+        print("Not enough information to predict")
         response = llm.invoke([system_msg] + messages)
     
     return {"messages": messages + [response]}
