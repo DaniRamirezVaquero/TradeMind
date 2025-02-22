@@ -92,4 +92,6 @@ Escala de grados finales:
 - C: Pantalla (4), Cuerpo (4), Funcional (1)
 - D: Pantalla (3), Cuerpo (3), Funcional (2)
 - E: Pantalla (4), Cuerpo (4), Funcional (2)
+
+Una vez que determines el grado, se lo indicarás al usuario y procederás con la evaluación del precio. Recuerda ser claro y preciso en tus preguntas y evaluaciones.
 """

@@ -1,13 +1,15 @@
+from datetime import datetime
 from typing import Dict, Any, TypedDict, Sequence
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.schema import SystemMessage, BaseMessage
 from langgraph.graph import MessagesState
+import json
 
 from .tools import predict_price, recommend_device, get_release_date
 from .prompts import SYSTEM_PROMPT, GRADING_PROMPT
-from .models import ConversationState
+from .models import ConversationState, DeviceInfo
 from .agent_state import get_next_stage
 from dotenv import load_dotenv
 
@@ -21,11 +23,39 @@ tools = [predict_price, recommend_device, get_release_date]
 
 llm_with_tools = llm.bind_tools(tools)
 
-# Define el tipo de estado personalizado que incluye conversation_state
-class AgentState(TypedDict):
-    messages: Sequence[BaseMessage]
-    conversation_state: ConversationState
+# Extrae información relevante de los mensajes del usuario
+def extract_info(messages: Sequence[BaseMessage], llm):
+    sys_msg = """Tu objetivo es analizar estos mensaje y extraer la siguente información de ellos:
+    - Marca del dispositivo:
+    - Modelo del dispositivo:
+    - Almacenamiento del dispositivo:
+    - Conectividad 5G (sí/no):
+    - Fecha de lanzamiento del dispositivo (MM/YYYY):
+    
+    Si hay algún dato que el usuario no proporcionó, puedes asumir un valor por defecto, asignalo.
+    
+    Debes devolver un json con formato válido, para este modelo:
+    
+    class DeviceInfo(BaseModel):
+    brand: str = ""
+    model: str = ""
+    storage: str = ""
+    has_5g: Optional[bool] = None
+    release_date: Optional[date] = None
+    """
+    result = llm.invoke([SystemMessage(content=sys_msg)] + messages)
+    result_dict = json.loads(result.content)  # Convertir la cadena JSON a un diccionario
+    
+        # Convertir la fecha de lanzamiento al formato YYYY-MM-DD
+    if 'release_date' in result_dict and result_dict['release_date']:
+        try:
+            result_dict['release_date'] = datetime.strptime(result_dict['release_date'], "%m/%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            result_dict['release_date'] = None  # Manejar fechas inválidas
+            
+    return DeviceInfo(**result_dict)
 
+# Define el tipo de estado personalizado que incluye conversation_state
 def build_system_prompt(messages: Sequence[BaseMessage], state: Dict) -> SystemMessage:
     """Build system prompt based on conversation stage."""
     # Detectar la etapa actual basándonos en el último mensaje
@@ -54,46 +84,33 @@ def build_system_prompt(messages: Sequence[BaseMessage], state: Dict) -> SystemM
     
     return SystemMessage(content=base_prompt)
 
-def can_predict_price(messages: Sequence[BaseMessage]) -> bool:
-    """Verifica si tenemos toda la información necesaria para predecir el precio."""
-    required_info = {
-        "brand": False,
-        "model": False,
-        "storage": False,
-        "has_5g": False,
-        "release_date": False,
-        "grade": False
-    }
+def can_predict_price(conversation_state: ConversationState) -> bool:
+    current_device_info = conversation_state.device_info
     
-    # Buscar en los últimos mensajes por la información necesaria
-    for msg in messages:
-        content = msg.content.lower()
-        if "grade" in content and any(grade in content for grade in ["b", "c", "d", "e"]):
-            required_info["grade"] = True
-        if "fecha de lanzamiento" in content and "/" in content:
-            required_info["release_date"] = True
-        if "5g" in content:
-            required_info["has_5g"] = True
-        if "almacenamiento" in content:
-            required_info["storage"] = True
-        if "modelo" in content:
-            required_info["model"] = True
-        if "marca" in content:
-            required_info["brand"] = True
-            
-    print("Required info:", required_info)  
+    print("device_info:", current_device_info)
     
-    return all(required_info.values())
+    for field in current_device_info.dict().values():
+        if field is None or field == "":
+            print("Missing information to predict price")
+            return False
+    
+    print("All information available to predict price")
+    return True
 
 def assistant(state: MessagesState) -> MessagesState:
     """Main assistant node that handles the conversation flow."""
     messages = state["messages"]
     
+    # Recupera o crea la instancia de ConversatiónState
+    conversation_state = state.get("conversation_state", ConversationState())
+    
+    conversation_state.device_info = extract_info(messages, llm)
+    
     # Build prompt with stage awareness
     system_msg = build_system_prompt(messages, state)
     
     # Process with LLM and tools
-    if can_predict_price(messages):
+    if can_predict_price(conversation_state):
         print("Predicting price")
         response = llm_with_tools.invoke([system_msg] + messages)
     else:
