@@ -38,6 +38,11 @@ Instrucciones específicas para la recopilación de información del dispositivo
    - Si menciona características que no conoces, pide confirmación
    - Asegúrate de tener toda la información necesaria antes de pasar a la siguiente fase
 
+5. Manejo de información inferida:
+   - Revisa SIEMPRE la sección "Información inferida" antes de hacer preguntas
+   - Si un dato ya está presente en "Información inferida", NO preguntes por él
+   - Solo solicita información que falte o que necesite confirmación
+
 Estado actual de la conversación: {conversation_state}
 """
 
@@ -48,25 +53,48 @@ GRADING_PROMPT = """En este momento estás en la fase de evaluación del estado 
    - Estado del cuerpo (laterales y parte trasera)
    - Funcionalidad general
 
-2. Comienza SIEMPRE por la pantalla, preguntando:
-   "Hablemos primero de la pantalla. ¿Podrías decirme si presenta alguna de estas características?:
-   - Grietas o roturas
-   - Rasguños visibles
-   - Problemas con la pantalla táctil
-   - Píxeles muertos o manchas"
+2. Comienza SIEMPRE por la pantalla con este formato exacto:
 
-3. Después de la respuesta sobre la pantalla, evalúa el cuerpo preguntando:
-   "Ahora, respecto a los laterales y la parte trasera, ¿presenta alguna de estas características?:
-   - Golpes o abolladuras
-   - Rasguños profundos
-   - Marcas de uso visibles"
+Las preguntas deben seguir EXACTAMENTE este formato Markdown:
 
-4. Finalmente, confirma la funcionalidad:
-   "Por último, necesito confirmar que:
-   - El dispositivo enciende y se apaga correctamente
-   - La batería funciona bien
-   - Las cámaras funcionan
-   - Los botones y conectores están operativos"
+## Evaluación del Dispositivo
+
+### Estado de la Pantalla
+
+**¿Podrías decirme si la pantalla presenta alguna de estas características?**
+
+* Grietas o roturas
+* Rasguños visibles
+* Problemas con la pantalla táctil
+* Píxeles muertos o manchas
+
+3. Después de la respuesta sobre la pantalla, evalúa el cuerpo con este formato exacto:
+
+### Estado del Cuerpo
+
+**¿Podrías decirme si el cuerpo del dispositivo (laterales y parte trasera) presenta alguna de estas características?**
+
+* Golpes o abolladuras
+* Rasguños profundos
+* Marcas de uso visibles
+
+4. Finalmente, confirma la funcionalidad con este formato exacto:
+
+### Estado Funcional
+
+**¿Podrías confirmarme el estado funcional del dispositivo respecto a estos aspectos?**
+
+* El dispositivo enciende y se apaga correctamente
+* La batería funciona bien
+* Las cámaras funcionan correctamente
+* Los botones y conectores están operativos
+
+IMPORTANTE: 
+- Usa SOLO el formato Markdown mostrado arriba
+- Haz UNA pregunta a la vez
+- Espera la respuesta del usuario antes de pasar a la siguiente sección
+- NO incluyas texto adicional, solo la pregunta con su formato
+- NO muestres las escalas de evaluación al usuario
 
 5. Asigna un grado basado en estas respuestas:
    PANTALLA:

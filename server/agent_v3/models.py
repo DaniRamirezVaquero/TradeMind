@@ -16,9 +16,9 @@ class Functional(Enum):
     NO = 2
 
 class DeviceInfo(BaseModel):
-    brand: str = ""
-    model: str = ""
-    storage: str = ""
+    brand: Optional[str] = ""
+    model: Optional[str] = ""
+    storage: Optional[str] = ""
     has_5g: Optional[bool] = None
     release_date: Optional[date] = None
 
@@ -27,9 +27,3 @@ class PhysicalState(BaseModel):
     state_body: Optional[int] = None
     state_functional: Optional[int] = None
     grade: Optional[str] = None
-
-class ConversationState(BaseModel):
-    stage: str = "greeting"  # greeting, info_gathering, grade_assessment, price_prediction
-    intent: Optional[str] = None  # buy, sell
-    device_info: DeviceInfo = DeviceInfo()
-    physical_state: PhysicalState = PhysicalState()

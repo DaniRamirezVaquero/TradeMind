@@ -65,6 +65,7 @@ export class ChatService {
           response.messages.forEach(msg => {
             if (msg.type === 'AI') {
               this.messageSubject.next(msg);
+              console.log('AI:', msg.content);
             }
           });
           this.loadingSubject.next(false);
