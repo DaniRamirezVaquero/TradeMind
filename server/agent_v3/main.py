@@ -28,19 +28,41 @@ class State(MessagesState):
     device_info: DeviceInfo = DeviceInfo()
     physical_state: PhysicalState = PhysicalState()
 
-def extract_info(messages: Sequence[BaseMessage], llm) -> DeviceInfo:
+def extract_info(messages: Sequence[BaseMessage], llm, state) -> DeviceInfo:
+    # Obtener la información existente del state
+    current_info = state.device_info if hasattr(state, 'device_info') else DeviceInfo()
+    
     # Extraer solo el contenido de los mensajes del usuario
     conversation_text = "\n".join([
         f"Usuario: {msg.content}" if msg.type == "human" else f"Asistente: {msg.content}"
         for msg in messages
     ])
     
-    sys_msg = """AActúa como un parseador de información con capacidad de inferencia. Tu tarea es:
+    sys_msg = """Actúa como un parseador de información con capacidad de inferencia. Tu tarea es:
     1. Analizar el texto proporcionado
     2. Extraer información explícita sobre el dispositivo móvil
     3. Inferir información implícita basada en tu conocimiento (ejemplo: si mencionan iPhone 12, puedes inferir que es Apple, tiene 5G, etc.)
     4. Generar un JSON con toda la información, tanto explícita como inferida
     
+    REGLAS DE NORMALIZACIÓN DE MODELOS:
+    1. Completar nombres parciales a su forma oficial
+    - "Samsung S21" → "Galaxy S21"
+    - "iPhone 12" → "iPhone 12"
+    - "S23 Ultra" → "Galaxy S23 Ultra"
+    - "Xiaomi 13" → "Xiaomi 13"
+    - "Redmi Note 12" → "Xiaomi Redmi Note 12"
+
+    2. Resolver referencias comunes:
+    - Si mencionan "Galaxy" sin "Samsung", añadir "Samsung"
+    - Si mencionan solo el modelo (ej: "S21"), inferir la marca
+    - Si el modelo tiene variantes (ej: Plus, Pro, Ultra), usar el mencionado o el base
+
+    EJEMPLOS DE INFERENCIA:
+    - Usuario dice: "Tengo un S21" → {{"brand": "Samsung", "model": "Galaxy S21"}}
+    - Usuario dice: "Mi Note 12" → {{"brand": "Xiaomi", "model": "Xiaomi Redmi Note 12"}}
+    - Usuario dice: "Galaxy A54" → {{"brand": "Samsung", "model": "Galaxy A54"}}
+    - Usuario dice: "iPhone 13 Pro" → {{"brand": "Apple", "model": "iPhone 13 Pro"}}
+        
     NO debes interactuar ni hacer preguntas. Solo extrae la información disponible y genera un JSON.
 
     FORMATO DE SALIDA REQUERIDO:
@@ -81,24 +103,51 @@ def extract_info(messages: Sequence[BaseMessage], llm) -> DeviceInfo:
         cleaned_content = result.content.strip()
         result_dict = json.loads(cleaned_content)
         
+        # Preservar datos existentes que no sean vacíos
+        if current_info:
+            # Preservar brand si existe
+            if current_info.brand:
+                result_dict['brand'] = current_info.brand
+            
+            # Preservar model si existe
+            if current_info.model:
+                result_dict['model'] = current_info.model
+            
+            # Preservar storage si existe
+            if current_info.storage:
+                result_dict['storage'] = current_info.storage
+            
+            # Preservar has_5g si existe
+            if current_info.has_5g is not None:
+                result_dict['has_5g'] = current_info.has_5g
+            
+            # Preservar release_date si existe
+            if current_info.release_date:
+                result_dict['release_date'] = current_info.release_date
+        
         # Asegurar que los campos string no sean None
         result_dict['brand'] = result_dict.get('brand') or ""
         result_dict['model'] = result_dict.get('model') or ""
         result_dict['storage'] = result_dict.get('storage') or ""
         
-        # Procesar fecha si existe
-        if result_dict.get('release_date'):
+                # Procesar fecha si existe y no había una fecha válida previamente
+        if result_dict.get('release_date') and not current_info.release_date:
             try:
-                # Intentar convertir varios formatos de fecha comunes
                 date_str = result_dict['release_date']
-                if len(date_str.split('/')) == 2:  # Formato MM/YYYY
-                    date_obj = datetime.strptime(date_str, "%m/%Y")
-                    result_dict['release_date'] = date_obj.replace(day=1).strftime("%Y-%m-%d")
-                elif len(date_str.split('-')) == 3:  # Ya está en formato YYYY-MM-DD
-                    datetime.strptime(date_str, "%Y-%m-%d")  # Validar formato
-                else:
-                    result_dict['release_date'] = None
-            except ValueError:
+                if isinstance(date_str, str):
+                    if len(date_str.split('/')) == 2:  # Formato MM/YYYY
+                        month, year = date_str.split('/')
+                        result_dict['release_date'] = f"{year}-{month.zfill(2)}-01"
+                    elif len(date_str.split('-')) == 2:  # Formato YYYY-MM
+                        result_dict['release_date'] = f"{date_str}-01"
+                    elif len(date_str.split('-')) == 3:  # Ya está en formato YYYY-MM-DD
+                        # Validar que la fecha sea correcta
+                        datetime.strptime(date_str, "%Y-%m-%d")
+                        result_dict['release_date'] = date_str
+                    else:
+                        result_dict['release_date'] = None
+            except (ValueError, IndexError):
+                # Si hay cualquier error en el procesamiento de la fecha
                 result_dict['release_date'] = None
         
         return DeviceInfo(**result_dict)
@@ -106,7 +155,7 @@ def extract_info(messages: Sequence[BaseMessage], llm) -> DeviceInfo:
     except json.JSONDecodeError as e:
         print(f"Error al decodificar JSON: {e}")
         print("Contenido del resultado:", cleaned_content)
-        # En caso de error, devolver un DeviceInfo vacío
+        # En caso de error, devolver la información existente
         return DeviceInfo()
 
 # Define el tipo de estado personalizado que incluye conversation_state
@@ -120,7 +169,7 @@ def build_system_prompt(messages: Sequence[BaseMessage], state: State) -> System
     for msg in reversed(last_messages):
         if isinstance(msg, BaseMessage):
             content = msg.content.lower()
-            if "lanzamiento" in content or "fecha" in content or can_predict_price(state):
+            if "lanzamiento" in content or "fecha" in content or got_basic_info(state):
                 state["stage"] = "grade_assessment"
                 break
             elif any(word in content for word in ["5g", "almacenamiento", "modelo"]):
@@ -148,7 +197,7 @@ def build_system_prompt(messages: Sequence[BaseMessage], state: State) -> System
     
     return SystemMessage(content=base_prompt)
 
-def can_predict_price(state: State) -> bool:
+def got_basic_info(state: State) -> bool:
     current_device_info = state["device_info"]
     
     print("device_info:", current_device_info)
@@ -165,14 +214,14 @@ def assistant(state: State) -> State:
     """Main assistant node that handles the conversation flow."""
     messages = state["messages"]
     
-    state["device_info"] = extract_info(messages, llm)
+    state["device_info"] = extract_info(messages, llm, state)
     
     # Build prompt with stage awareness
     system_msg = build_system_prompt(messages, state)
     
     
     # Process with LLM and tools
-    if can_predict_price(state):
+    if got_basic_info(state):
         print("Using llm_with_tools")
         response = llm_with_tools.invoke([system_msg] + messages)
     else:
