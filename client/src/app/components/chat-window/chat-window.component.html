@@ -2,11 +2,12 @@
   #scrollPanel
   id="chat-window-container"
   [style]="{ width: '100%', height: '100%' }"
-  styleClass="bg-surface-800/70 p-4 rounded-xl"
+  styleClass="bg-surface-800/70 p-5 rounded-xl"
+
 >
   @for (msg of messages; track $index; let last = $last) { @if (msg.type ==
   'AI') {
-  <div class="px-4 py-3 w-fit max-w-[95%]" [class.mb-4]="!last">
+  <div class="px-4 py-3 w-fit max-w-[95%] typing-container prose" [class.mb-4]="!last">
     <markdown
       [data]="msg.content">
     </markdown>

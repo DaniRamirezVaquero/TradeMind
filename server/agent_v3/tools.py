@@ -27,7 +27,7 @@ def predict_price(
     storage: str,
     has_5g: bool,
     release_date: Union[str, date],
-    grade: str,
+    grade: str = 'C',
     sale_date: Union[str, date] = date.today()
 ) -> float:
     """Predicts the selling price of a device based on its characteristics."""

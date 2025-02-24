@@ -1,0 +1,28 @@
+:host ::ng-deep #chat-window-container {
+  position: relative;
+}
+
+:host ::ng-deep #chat-window-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 65px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgb(32, 32, 34) 30%,
+    rgba(255, 0, 0, 0) 100%
+  );
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+:host ::ng-deep .p-scrollpanel-content {
+  z-index: 0;
+}
+
+:host ::ng-deep .p-scrollpanel-wrapper {
+  z-index: 1;
+}

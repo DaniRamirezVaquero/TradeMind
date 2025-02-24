@@ -132,7 +132,7 @@ def build_system_prompt(messages: Sequence[BaseMessage], state: State) -> System
     # Construir el prompt base
     device_info = state["device_info"]
     inferred_info = f"""
-    Información inferida:
+    INFORMACIÓN INFERIDA:
     - Marca: {device_info.brand}
     - Modelo: {device_info.model}
     - Almacenamiento: {device_info.storage}
@@ -142,7 +142,6 @@ def build_system_prompt(messages: Sequence[BaseMessage], state: State) -> System
     
     base_prompt = SYSTEM_PROMPT.format(conversation_state="Current stage: " + state["stage"]) + inferred_info
 
-    
     # Añadir el GRADING_PROMPT si estamos en la fase de evaluación
     if state["stage"] == "grade_assessment":
         return SystemMessage(content=base_prompt + "\n\n" + GRADING_PROMPT)
@@ -170,6 +169,7 @@ def assistant(state: State) -> State:
     
     # Build prompt with stage awareness
     system_msg = build_system_prompt(messages, state)
+    
     
     # Process with LLM and tools
     if can_predict_price(state):
