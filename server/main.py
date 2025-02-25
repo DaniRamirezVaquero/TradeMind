@@ -5,8 +5,8 @@ from typing import Optional, List
 from langchain.schema import HumanMessage, AIMessage
 from uuid import uuid4
 
-from agent_v3.main import react_graph
-from agent_v3.agent_state import initialize_state
+from agent.main import react_graph
+from agent.agent_state import initialize_state
 
 # Dictionary to store session data
 sessions = {}
