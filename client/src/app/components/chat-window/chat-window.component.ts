@@ -102,10 +102,6 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewChecked 
     }
   }
 
-  onCopyToClipboard() {
-    console.log('Copied to clipboard!');
-  }
-
   ngOnDestroy() {
     this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
