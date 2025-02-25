@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from .utils import build_prompt, extract_info, got_basic_info
 from .tools import predict_price, recommend_device, get_release_date
-from .models import State
+from .agent_state import State
 
 load_dotenv()
 

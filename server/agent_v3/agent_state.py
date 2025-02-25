@@ -1,9 +1,11 @@
-from langchain.schema import AIMessage
+from typing import Optional
+from langgraph.graph import MessagesState
 
-def initialize_state():
-    """Initialize a new conversation state."""
-    return {
-        "messages": [
-            AIMessage(content="¡Hola! Soy TradeMind, tu agente especializado en reventa de smartphones, ¿en qué te puedo ayudar?")
-        ]
-    }
+from .models import DeviceInfo, PhysicalState
+
+class State(MessagesState):
+    stage: str = "greeting"  
+    intent: Optional[str] = None
+    device_info: DeviceInfo = DeviceInfo()
+    physical_state: PhysicalState = PhysicalState()
+    grade: Optional[str] = None
