@@ -2,24 +2,9 @@ from datetime import date, datetime
 import random
 from typing import Optional, Union
 
-def parse_date(date_str: Union[str, date]) -> date:
-    """Convierte una string de fecha en objeto date."""
-    if isinstance(date_str, date):
-        return date_str
-    try:
-        # Intenta parsear primero como MM/YYYY
-        if '/' in date_str and len(date_str.split('/')) == 2:
-            month, year = date_str.split('/')
-            return date(int(year), int(month), 1)
-        # Intenta diferentes formatos comunes
-        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d', '%d-%m-%Y'):
-            try:
-                return datetime.strptime(date_str, fmt).date()
-            except ValueError:
-                continue
-        raise ValueError(f"No se pudo convertir '{date_str}' a fecha")
-    except ValueError as e:
-        raise ValueError(f"Error al procesar la fecha: {e}")
+from .utils import parse_date
+
+
 
 def predict_price(
     brand: str,

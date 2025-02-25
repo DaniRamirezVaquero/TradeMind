@@ -1,19 +1,8 @@
 
 from pydantic import BaseModel
-
-from typing import Optional, List
+from typing import Optional
 from datetime import date
-from enum import Enum
-
-class State(Enum):
-    IMPECABLE = 1
-    BUENO = 2
-    USADO = 3
-    ROTO = 4
-
-class Functional(Enum):
-    SI = 1
-    NO = 2
+from langgraph.graph import MessagesState
 
 class DeviceInfo(BaseModel):
     brand: Optional[str] = ""
@@ -22,8 +11,16 @@ class DeviceInfo(BaseModel):
     has_5g: Optional[bool] = None
     release_date: Optional[date] = None
 
+
 class PhysicalState(BaseModel):
     state_screen: Optional[int] = None
     state_body: Optional[int] = None
     state_functional: Optional[int] = None
+
+
+class State(MessagesState):
+    stage: str = "greeting"  
+    intent: Optional[str] = None
+    device_info: DeviceInfo = DeviceInfo()
+    physical_state: PhysicalState = PhysicalState()
     grade: Optional[str] = None
