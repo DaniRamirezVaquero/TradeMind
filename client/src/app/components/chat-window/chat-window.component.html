@@ -5,9 +5,9 @@
   styleClass="bg-surface-800/70 p-5 rounded-xl"
 
 >
-  @for (msg of messages; track $index; let last = $last) { @if (msg.type ==
-  'AI') {
-  <div class="px-4 py-3 w-fit max-w-[95%] typing-container prose" [class.mb-4]="!last">
+  @for (msg of messages; track $index; let last = $last; let first = $first) {
+  @if (msg.type == 'AI') {
+  <div class="px-4 py-2 w-fit max-w-[95%] typing-container prose" [class.mb-4]="!last" [class.mt-4]="first">
     <markdown
       [data]="msg.content">
     </markdown>
@@ -20,7 +20,7 @@
     <p>{{ msg.content }}</p>
   </div>
   } } @if (isLoading) {
-  <div class="px-4 py-3 w-fit max-w-[70%] mb-4 flex items-center gap-2">
+  <div class="px-4 py-3 w-fit max-w-[70%] mb-4 flex items-center gap-2" [class.mt-3]="messages.length == 0">
     <p-progressSpinner
       [style]="{ width: '30px', height: '30px' }"
       strokeWidth="4"

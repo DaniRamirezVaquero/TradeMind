@@ -1,6 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 import random
 from typing import Optional, Union
+
+from .models import DeviceInfo
 
 from .utils import parse_date
 
@@ -37,15 +39,25 @@ def predict_price(
     
     return round(final_price, 2)
 
-def recommend_device(budget: float) -> dict:
-    """Recommends a device based on budget."""
+def recommend_device(budget: float, brand_preference: str, min_storage: int, grade_preference: str) -> DeviceInfo:
+    """Recommends a device based on budget, brand preference, and other criteria."""
     # TODO: Replace with actual recommendation logic
-    sample_devices = [
-        {"brand": "Samsung", "model": "Galaxy S21", "price": 699.99},
-        {"brand": "Apple", "model": "iPhone 13", "price": 799.99},
-        {"brand": "Google", "model": "Pixel 6", "price": 599.99}
-    ]
-    return random.choice([d for d in sample_devices if d["price"] <= budget])
+    # For now, we'll just return a random device
+    brands = ["Apple", "Samsung", "Google", "OnePlus"]
+    models = ["iPhone 13", "Galaxy S21", "Pixel 6", "OnePlus 9"]
+    storages = ["64GB", "128GB", "256GB"]
+    has_5g = random.choice([True, False])
+    release_date = date.today()
+    
+    print(f"Recommending device within ${budget} with {min_storage}GB storage, brand: {brand_preference}, grade: {grade_preference}")
+    
+    return DeviceInfo(
+        brand=random.choice(brands),
+        model=random.choice(models),
+        storage=random.choice(storages),
+        has_5g=has_5g,
+        release_date=release_date
+    )
 
 def get_release_date(brand: str, model: str) -> Optional[date]:
     """Gets the release date for a device model."""

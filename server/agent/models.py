@@ -10,7 +10,10 @@ class DeviceInfo(BaseModel):
     has_5g: Optional[bool] = None
     release_date: Optional[date] = None
 
-class PhysicalState(BaseModel):
-    state_screen: Optional[int] = None
-    state_body: Optional[int] = None
-    state_functional: Optional[int] = None
+
+class BuyingInfo(BaseModel):
+    budget: Optional[float] = None
+    brand_preference: Optional[str] = ""
+    min_storage: Optional[int] = None
+    grade_preference: Optional[str] = ""
+    

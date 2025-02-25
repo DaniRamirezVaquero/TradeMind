@@ -5,7 +5,7 @@ from langgraph.graph import START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 from dotenv import load_dotenv
 
-from .utils import build_prompt, extract_info, got_basic_info
+from .utils import build_prompt, detect_intent, extract_buying_info, extract_selling_info, got_basic_buying_info, got_basic_info
 from .tools import predict_price, recommend_device, get_release_date
 from .agent_state import State
 
@@ -18,25 +18,42 @@ llm = ChatOpenAI(model="gpt-4", temperature=0)
 tools = [predict_price, recommend_device, get_release_date]
 llm_with_tools = llm.bind_tools(tools)
 
+
 def assistant(state: State) -> State:
     """Main assistant node that handles the conversation flow."""
-    messages = state["messages"]
-    
-    state["device_info"] = extract_info(messages, llm, state)
-    
+
+    # Detect intent if not set or on potential intent change
+    last_message = state["messages"][-1].content.lower()
+    if not state["intent"] or any(word in last_message for word in ["comprar", "vender", "quiero", "necesito", "vendo", "compro", "adquirir"]):
+        state["intent"] = detect_intent(state, llm)
+
     # Build prompt with stage awareness
-    system_msg = build_prompt(messages, state)
-    
-    
-    # Process with LLM and tools
-    if got_basic_info(state):
-        print("Using llm_with_tools")
-        response = llm_with_tools.invoke([system_msg] + messages)
-    else:
-        print("Not enough information to predict")
-        response = llm.invoke([system_msg] + messages)
-    
-    return {"messages": messages + [response]}
+    system_msg = build_prompt(state)
+
+    if state["intent"] == "sell":
+        state["device_info"] = extract_selling_info(state, llm)
+        if got_basic_info(state):
+            print("Using llm_with_tools")
+            response = llm_with_tools.invoke([system_msg] + state["messages"])
+            
+        else:
+            print("Not enough information to predict price")
+            response = llm.invoke([system_msg] + state["messages"])
+            
+    elif state["intent"] == "buy":
+        state["buying_info"] = extract_buying_info(state, llm)
+        if got_basic_buying_info(state):
+            print("Using llm_with_tools")
+            response = llm_with_tools.invoke([system_msg] + state["messages"])
+            
+        else:
+            print("Not enough information to recommend device")
+            response = llm.invoke([system_msg] + state["messages"])
+
+    # Update state
+    state["messages"] = state["messages"] + [response]
+    return state
+
 
 # Build graph
 builder = StateGraph(State)

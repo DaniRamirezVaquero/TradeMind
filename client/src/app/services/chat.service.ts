@@ -32,13 +32,21 @@ export class ChatService {
       // Retornar los mensajes iniciales
       return response.messages;
     } else {
-      // Cargar mensajes existentes
-      const response = await firstValueFrom(
-        this.http.get<{messages: Message[]}>(`${this.apiUrl}/messages/${this.sessionId}`)
-      );
+      //TODO Gestionar de manera correcta el error en caso de que la sesión no exista
+      try {
+        // Cargar mensajes existentes
+        const response = await firstValueFrom(
+          this.http.get<{messages: Message[]}>(`${this.apiUrl}/messages/${this.sessionId}`)
+        );
 
-      // Retornar los mensajes existentes
-      return response.messages;
+        // Retornar los mensajes existentes
+        return response.messages;
+      } catch (error) {
+        // Si hay error, crear nueva sesión
+        localStorage.removeItem('chatSessionId');
+        this.sessionId = null;
+        return this.initializeSession();
+      }
     }
   }
 
