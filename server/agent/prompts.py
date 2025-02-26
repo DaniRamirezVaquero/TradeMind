@@ -1,4 +1,4 @@
-DETECT_INTENT_PROMPT = """Tu tarea es detectar la intención del usuario en base al siguente mensaje. Debes clasificar la intención en una de las siguientes categorías: venta, compra, información, o none.
+DETECT_INTENT_PROMPT = """Tu tarea es detectar la intención del usuario en base al siguente mensaje. Debes clasificar la intención en una de las siguientes categorías: venta, compra, grafica o none.
 
 MENSAJE A ANALIZAR:
 ===========================
@@ -11,7 +11,7 @@ INTECIÓN ACTUAL:
 ==========
 
 REGLAS:
-   1. Si el mensaje contiene palabras como "vender", "vendo", "comprar", "compro", "información", "grafica", "ver precios" etc., clasifícalo en la categoría correspondiente.
+   1. Si el mensaje contiene palabras como "vender", "vendo", "comprar", "compro", "grafica", "ver precios" etc., clasifícalo en la categoría correspondiente.
    2. Si el mensaje no contiene none palabra clave, clasifícalo como none, SOLO PUEDES CLASIFICAR COMO none en caso de que anteriormente la inteción ya fuera none o null o "".
    3. Si un mensaje contiene palabras de diferentes categorías, clasifícalo en la categoría más relevante.
    4. Si el usuario indica que quiere ver una gráfica de precios, la evolucion de precio o la depreciacion, clasifícalo como graphic.

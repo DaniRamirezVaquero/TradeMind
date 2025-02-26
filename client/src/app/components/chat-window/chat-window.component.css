@@ -27,6 +27,6 @@
   z-index: 1;
 }
 
-::ng-deep p-chart canvas {
+:host ::ng-deep p-chart canvas {
   height: 400px !important;
 }
