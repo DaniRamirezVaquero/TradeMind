@@ -26,3 +26,7 @@
 :host ::ng-deep .p-scrollpanel-wrapper {
   z-index: 1;
 }
+
+::ng-deep p-chart canvas {
+  height: 400px !important;
+}

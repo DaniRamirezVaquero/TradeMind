@@ -5,8 +5,8 @@ from langgraph.graph import START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 from dotenv import load_dotenv
 
-from .utils import build_prompt, detect_intent, extract_buying_info, extract_selling_info, got_basic_buying_info, got_basic_info
-from .tools import predict_price, recommend_device, get_release_date
+from .utils import build_prompt, detect_intent, extract_buying_info, extract_selling_info, got_basic_buying_info, got_basic_info, intent_change_potential
+from .tools import generate_graphic_dict, predict_price, recommend_device, get_release_date
 from .agent_state import State
 
 load_dotenv()
@@ -15,23 +15,26 @@ load_dotenv()
 llm = ChatOpenAI(model="gpt-4", temperature=0)
 
 # Define tools como funciones en lugar de diccionarios
-tools = [predict_price, recommend_device, get_release_date]
+tools = [predict_price, recommend_device, get_release_date, generate_graphic_dict]
 llm_with_tools = llm.bind_tools(tools)
 
 
 def assistant(state: State) -> State:
     """Main assistant node that handles the conversation flow."""
 
-    # Detect intent if not set or on potential intent change
-    last_message = state["messages"][-1].content.lower()
-    if not state["intent"] or any(word in last_message for word in ["comprar", "vender", "quiero", "necesito", "vendo", "compro", "adquirir"]):
+    # Solo detectar intent si es necesario
+    if not state.get("intent"):
         state["intent"] = detect_intent(state, llm)
+    elif intent_change_potential(state):
+        new_intent = detect_intent(state, llm)
+        if new_intent != state["intent"]:
+            print(f"Intent changed from {state['intent']} to {new_intent}")
+            state["intent"] = new_intent
 
-    # Build prompt with stage awareness
-    system_msg = build_prompt(state)
-
-    if state["intent"] == "sell":
+    if state["intent"] == "sell" or state["intent"] == "graphic":
         state["device_info"] = extract_selling_info(state, llm)
+        # Build prompt with stage awareness
+        system_msg = build_prompt(state)
         if got_basic_info(state):
             print("Using llm_with_tools")
             response = llm_with_tools.invoke([system_msg] + state["messages"])
@@ -42,6 +45,7 @@ def assistant(state: State) -> State:
             
     elif state["intent"] == "buy":
         state["buying_info"] = extract_buying_info(state, llm)
+        system_msg = build_prompt(state)
         if got_basic_buying_info(state):
             print("Using llm_with_tools")
             response = llm_with_tools.invoke([system_msg] + state["messages"])
@@ -49,6 +53,10 @@ def assistant(state: State) -> State:
         else:
             print("Not enough information to recommend device")
             response = llm.invoke([system_msg] + state["messages"])
+            
+    else:
+        system_msg = build_prompt(state)
+        response = llm.invoke([system_msg] + state["messages"])
 
     # Update state
     state["messages"] = state["messages"] + [response]

@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from .agent_state import State
 from .models import BuyingInfo, DeviceInfo
-from .prompts import BUYING_INFO_EXTRACT_PROMPT, BUYING_PROMPT, SELLING_PROMPT, GRADING_PROMPT, BASIC_INFO_EXTRACTION_PROMPT, DETECT_INTENT_PROMPT
+from .prompts import BASE_PROMPT, BUYING_INFO_EXTRACT_PROMPT, BUYING_PROMPT, SELLING_PROMPT, GRADING_PROMPT, BASIC_INFO_EXTRACTION_PROMPT, DETECT_INTENT_PROMPT
 
 
 def extract_selling_info(state, llm) -> DeviceInfo:
@@ -26,7 +26,20 @@ def extract_selling_info(state, llm) -> DeviceInfo:
 
     try:
         cleaned_content = result.content.strip()
-        result_dict = json.loads(cleaned_content)
+        # Añadir comprobación del tipo de resultado
+        try:
+            result_dict = json.loads(cleaned_content)
+            if isinstance(result_dict, list):
+                print("Warning: LLM returned a list instead of a dictionary")
+                # Si es una lista, devolver la información actual o un DeviceInfo vacío
+                return current_info or DeviceInfo()
+            if not isinstance(result_dict, dict):
+                print(f"Warning: LLM returned unexpected type: {type(result_dict)}")
+                return current_info or DeviceInfo()
+        except json.JSONDecodeError as e:
+            print(f"Error al decodificar JSON: {e}")
+            print("Contenido del resultado:", cleaned_content)
+            return current_info or DeviceInfo()
 
         # Preservar datos existentes que no sean vacíos
         if current_info:
@@ -72,16 +85,15 @@ def extract_selling_info(state, llm) -> DeviceInfo:
                     else:
                         result_dict['release_date'] = None
             except (ValueError, IndexError):
-                # Si hay cualquier error en el procesamiento de la fecha
                 result_dict['release_date'] = None
 
         return DeviceInfo(**result_dict)
 
-    except json.JSONDecodeError as e:
-        print(f"Error al decodificar JSON: {e}")
+    except Exception as e:
+        print(f"Error inesperado: {e}")
         print("Contenido del resultado:", cleaned_content)
         # En caso de error, devolver la información existente
-        return DeviceInfo()
+        return current_info or DeviceInfo()
 
 
 def extract_buying_info(state, llm) -> BuyingInfo:
@@ -137,8 +149,11 @@ def extract_buying_info(state, llm) -> BuyingInfo:
 
 def build_prompt(state: State) -> SystemMessage:
     """Build system prompt based on conversation stage."""
+    
+    base_prompt = BASE_PROMPT
 
-    if state["intent"] == "sell":
+    if state["intent"] == "sell" or state["intent"] == "graphic":
+        print("Building prompt for selling or graphic intent")
         # Detectar la etapa actual basándonos en el último mensaje
         state["stage"] = "info_gathering"  # default
 
@@ -169,11 +184,11 @@ def build_prompt(state: State) -> SystemMessage:
         """
 
         base_prompt = SELLING_PROMPT.format(
-            conversation_state="Current stage: " + state["stage"]) + inferred_info
+            conversation_state="Current stage: " + state["stage"], intent=state["intent"]) + inferred_info
 
         # Añadir el GRADING_PROMPT si estamos en la fase de evaluación
         if state["stage"] == "grade_assessment":
-            return SystemMessage(content=base_prompt + "\n\n" + GRADING_PROMPT)
+            base_prompt = base_prompt + "\n\n" + GRADING_PROMPT
 
     elif state["intent"] == "buy":
         base_prompt = BUYING_PROMPT
@@ -234,9 +249,16 @@ def detect_intent(state: State, llm) -> json:
 
     result = llm.invoke([
         SystemMessage(content=DETECT_INTENT_PROMPT.format(
-            message=last_message))
+            message=last_message, intent=state["intent"]))
     ])
 
     print("DETECT INTENT RESULT:", result.content)
 
     return result.content
+
+
+def intent_change_potential(state: State) -> bool:
+    """Determina si el último mensaje del usuario sugiere un cambio de intención."""
+    last_message = state["messages"][-1].content.lower()
+
+    return any(word in last_message for word in ["comprar", "vender", "quiero", "necesito", "vendo", "compro", "adquirir", "gráfica", "progreso", "evolución", "depreciación"])

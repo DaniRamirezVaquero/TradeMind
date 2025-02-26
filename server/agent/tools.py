@@ -3,16 +3,13 @@ import random
 from typing import Optional, Union
 
 from .models import DeviceInfo
-
 from .utils import parse_date
 
-
-
 def predict_price(
-    brand: str,
-    model: str,
-    storage: str,
-    has_5g: bool,
+    brand: str, 
+    model: str, 
+    storage: str, 
+    has_5g: bool, 
     release_date: Union[str, date],
     grade: str = 'C',
     sale_date: Union[str, date] = date.today()
@@ -62,8 +59,33 @@ def recommend_device(budget: float, brand_preference: str, min_storage: int, gra
 def get_release_date(brand: str, model: str) -> Optional[date]:
     """Gets the release date for a device model."""
     # TODO: Replace with actual database lookup
+    
+    print(f"Getting release date for {brand} {model}")
     sample_dates = {
         ("Apple", "iPhone 13"): date(2021, 9, 24),
         ("Samsung", "Galaxy S21"): date(2021, 1, 29),
     }
     return sample_dates.get((brand, model))
+
+def generate_graphic_dict(
+    brand: str,
+    model: str,
+    storage: str,
+    has_5g: bool,
+    release_date: Union[str, date],
+    grade: str, 
+    date_range: list) -> dict:
+    """Generates a dictionary of date-price pairs for a graphic based on device info and grade."""
+    print(f"Generating graphic for {brand} {model} ({storage}, 5G: {has_5g}, grade: {grade})")
+    
+    graphic_data = {}
+    for date in date_range:
+        price = predict_price(brand, model, storage, has_5g, release_date, grade, date)
+        graphic_data[date] = price
+        
+    tool_result = {
+        "graph_data": graphic_data,
+    }
+    
+    return tool_result
+        

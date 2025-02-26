@@ -8,10 +8,12 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ChatService {
   private messageSubject = new Subject<Message>();
+  private toolResultSubject = new Subject<Message>();
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private sessionId: string | null = null;
 
   messages$ = this.messageSubject.asObservable();
+  toolResults$ = this.toolResultSubject.asObservable();
   loading$ = this.loadingSubject.asObservable();
 
   private apiUrl = 'http://localhost:8000';
@@ -38,7 +40,7 @@ export class ChatService {
         const response = await firstValueFrom(
           this.http.get<{messages: Message[]}>(`${this.apiUrl}/messages/${this.sessionId}`)
         );
-
+        console.log('Existing messages:', response.messages);
         // Retornar los mensajes existentes
         return response.messages;
       } catch (error) {
@@ -53,8 +55,6 @@ export class ChatService {
   sendMessage(message: Message) {
     // Emitir el mensaje del usuario inmediatamente
     this.messageSubject.next(message);
-
-    // Indicar que estamos cargando
     this.loadingSubject.next(true);
 
     const payload = {
@@ -69,13 +69,27 @@ export class ChatService {
           this.sessionId = response.sessionId;
           localStorage.setItem('chatSessionId', this.sessionId);
 
-          // Emitir solo la respuesta del AI
-          response.messages.forEach(msg => {
-            if (msg.type === 'AI') {
-              this.messageSubject.next(msg);
-              console.log('AI:', msg.content);
-            }
-          });
+          // Encontrar el último mensaje de AI
+          const lastAIMessage = [...response.messages]
+            .reverse()
+            .find(msg => msg.type === 'AI');
+
+          // Encontrar el último mensaje de tool_result
+          const lastToolResult = [...response.messages]
+            .reverse()
+            .find(msg => msg.type === 'tool_result');
+
+          // Emitir el último mensaje de AI si existe
+          if (lastAIMessage) {
+            this.messageSubject.next(lastAIMessage);
+            console.log('Last AI message:', lastAIMessage);
+          }
+
+          // Emitir el último mensaje de tool_result si existe
+          if (lastToolResult) {
+            this.toolResultSubject.next(lastToolResult);
+            console.log('Last tool_result:', lastToolResult);}
+
           this.loadingSubject.next(false);
         },
         error: (error) => {

@@ -8,16 +8,16 @@ module.exports = {
             color: '#fafafa', // color base del texto
 
             h1: {
-              color: '#fafafa', // color de h1
+              color: '#ddd0ff', // color de h1
               marginTop: '0',
             },
             h2: {
-              color: '#fafafa', // color de h2
+              color: '#a787ff', // color de h2
               marginTop: '0',
               marginBottom: '0.8rem'
             },
             h3: {
-              color: '#fafafa', // color de h3
+              color: '#ddd0ff', // color de h3
               marginTop: '1rem',
             },
             h4: {
@@ -33,6 +33,9 @@ module.exports = {
             ul: {
               marginTop: '0',
               margingBottom: '0',
+            },
+            th: {
+              color: '#ddd0ff', // color de th
             }
             // Puedes personalizar otros elementos como h3, p, li, etc.
           },
