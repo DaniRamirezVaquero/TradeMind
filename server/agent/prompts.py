@@ -15,11 +15,12 @@ REGLAS:
    2. Si el mensaje no contiene none palabra clave, clasifícalo como none, SOLO PUEDES CLASIFICAR COMO none en caso de que anteriormente la inteción ya fuera none o null o "".
    3. Si un mensaje contiene palabras de diferentes categorías, clasifícalo en la categoría más relevante.
    4. Si el usuario indica que quiere ver una gráfica de precios, la evolucion de precio o la depreciacion, clasifícalo como graphic.
-   5. Si no estás seguro, clasifícalo como none.
-   6. Debes reponder con la categoría correspondiente en minúsculas.
-   7. NO interactúes con el usuario
-   8. NO incluyas texto adicional en la respuesta
-   9. NO hagas preguntas adicionales
+   5. Si el usuario da un presupuesto, o pide una recomendación de dispositivo, damos por hecho que quiere comprar y clasifícamos como buy.
+   6. Si no estás seguro, clasifícalo como none.
+   7. Debes reponder con la categoría correspondiente en minúsculas.
+   8. NO interactúes con el usuario
+   9. NO incluyas texto adicional en la respuesta
+   10. NO hagas preguntas adicionales
 
 Otras consideraciones:
    - Si la intención actual es graphic, el usuario puede decir cosas como:
