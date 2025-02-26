@@ -1,59 +1,105 @@
-# Client
+# TradeMind Frontend 📱💹
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.6.
+## Descripción del Proyecto 📚
+La interfaz de usuario de TradeMind proporciona una experiencia interactiva para la compra-venta de smartphones. Desarrollada en Angular, ofrece una interfaz moderna y responsiva para interactuar con nuestro sistema de agentes inteligentes através de un chat.
 
-## Development server
+## Características Principales 🌟
 
-To start a local development server, run:
+### Chat Interactivo 💬
+- Interfaz de chat en tiempo real
+- Soporte para diferentes tipos de mensajes:
+  - Texto plano
+  - Gráficos de precios
+  - Recomendaciones estructuradas
+- Historial de conversación persistente
+- Indicadores de estado de escritura
 
-```bash
-ng serve
+### Visualización de Datos 📊
+- Gráficos interactivos de precios
+- Visualización de tendencias temporales
+- Comparativas de dispositivos
+- Filtros dinámicos
+
+### Características de UX 🎨
+- Diseño responsivo
+- Animaciones fluidas
+- Accesibilidad mejorada
+
+## Estructura del Proyecto 📁
+
+```
+client/
+├── src/
+│   ├── app/
+│   │   ├── components/     # Componentes reutilizables
+│   │   ├── services/       # Servicios de la aplicación
+│   │   ├── interfaces/     # Interfaces y tipos
+├── angular.json         # Configuración de Angular
+└── package.json         # Dependencias
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Requisitos Previos 📋
+- Node.js 16+
+- Angular CLI 16+
+- Conexión al backend de TradeMind*
 
-## Code scaffolding
+## Configuración del Entorno 🔧
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+1. Clona el repositorio:
+   ```bash
+   git clone <URL_DEL_REPOSITORIO>
+   cd TradeMind/client
+   ```
 
-```bash
-ng generate component component-name
-```
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+3. Configura las variables de entorno:
+   - Copia `environment.example.ts` a `environment.ts`
+   - Ajusta la URL del backend según sea necesario
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Comandos Disponibles 🛠️
 
 ```bash
-ng test
+# Desarrollo
+ng serve               # Inicia servidor de desarrollo
+ng serve --port 4200   # Especifica puerto
+
+# Construcción
+ng build              # Construye para producción
+ng build --prod       # Construcción optimizada
+
+# Generación de código
+ng generate component nombre-componente
+ng generate service nombre-servicio
+ng generate pipe nombre-pipe
 ```
 
-## Running end-to-end tests
+## Comunicación con el Backend 🔌
 
-For end-to-end (e2e) testing, run:
+### Endpoints Utilizados
+- `POST /chat` - Envío de mensajes
+- `POST /init-session` - Inicio de sesión
+- `GET /messages/{session_id}` - Recuperación de historial
 
-```bash
-ng e2e
+### Ejemplo de Uso del Servicio de Chat
+```typescript
+this.chatService.sendMessage({
+  content: 'mensaje',
+  type: 'text',
+  sessionId: 'session-123'
+}).subscribe(response => {
+  console.log(response);
+});
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Estado del Desarrollo 🚧
+- [x] Interfaz básica de chat
+- [x] Integración con backend
+- [x] Visualización de gráficos
+- [x] Gestión de sesiones
+- [x] Responsive design
+- [ ] PWA support
+- [ ] Internacionalización
